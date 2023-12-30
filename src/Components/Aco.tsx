@@ -12,6 +12,7 @@ import {
   TableContainer,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import Timer from "./Timer";
 
 type Klinedata = {
   pair: string;
@@ -19,6 +20,7 @@ type Klinedata = {
 }[];
 function Aco() {
   //let [data, setdata] = useState<Klinedata>([]);
+  let [resetcd, setresetcd] = useState(0);
   let [Acodata, setAcodata] = useState<String[]>([]);
   function generateData() {
     let temp: Klinedata = [];
@@ -148,16 +150,15 @@ function Aco() {
 
   useEffect(() => {
     generateData();
-    let t = setInterval(generateData, 30000);
+    let t = setInterval(() => {
+      generateData(), setresetcd((r) => r + 1);
+    }, 30000);
     return () => clearInterval(t);
   }, []);
 
-  // useEffect(() => {
-  //   console.log(Acodata);
-  // }, [Acodata]);
-
   return (
     <>
+      <Timer count={resetcd}></Timer>
       <TableContainer>
         <Table variant="striped" colorScheme="teal" size="lg">
           <TableCaption>Accelerator Oscillator</TableCaption>
@@ -170,7 +171,7 @@ function Aco() {
           <Tbody>
             {Acodata.map((i, indx) => (
               <Tr>
-                <Td>{indx}</Td>
+                <Td>{indx + 1}</Td>
 
                 <Td>{i}</Td>
               </Tr>
