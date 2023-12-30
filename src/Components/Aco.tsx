@@ -145,7 +145,7 @@ function Aco() {
         if (x == highaclist.length - 1) acListMaxHighs.push({ max });
       }
     }
-    return { high: acListMaxHighs.slice(0, 2), low: acListMaxLows.slice(0, 2) };
+    return { high: acListMaxHighs.slice(0, 3), low: acListMaxLows.slice(0, 3) };
   }
 
   useEffect(() => {

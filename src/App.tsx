@@ -1,5 +1,4 @@
 import Aco from "./Components/Aco";
-import Timer from "./Components/Timer";
 function App() {
   return (
     <>
