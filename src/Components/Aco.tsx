@@ -21,7 +21,9 @@ type Klinedata = {
 function Aco() {
   //let [data, setdata] = useState<Klinedata>([]);
   let [resetcd, setresetcd] = useState(0);
-  let [Acodata, setAcodata] = useState<String[]>([]);
+  let [Acodata, setAcodata] = useState<{ pair: string; percentrank: number }[]>(
+    []
+  );
   function generateData() {
     let temp: Klinedata = [];
     let data1: string[] = [];
@@ -68,8 +70,8 @@ function Aco() {
           });
           let h24status = true;
           let statusarray = item.kline.slice(
-            item.kline.length - 1 - 96,
-            item.kline.length - 4 * 2
+            item.kline.length - 1 - 23,
+            item.kline.length - 1 - 23 + 2
           );
           let lastprice = item.kline[item.kline.length - 1].close;
           statusarray.forEach((i) => {
@@ -79,8 +81,16 @@ function Aco() {
             data1.push(item.pair);
           }
         });
-
-        setAcodata(data1);
+        get24hrpercent().then((r) => {
+          setAcodata(
+            data1.map((item) => {
+              return {
+                pair: item,
+                percentrank: r.findIndex((i) => i.pair == item) + 1,
+              };
+            })
+          );
+        });
       });
   }
 
@@ -145,7 +155,7 @@ function Aco() {
         if (x == highaclist.length - 1) acListMaxHighs.push({ max });
       }
     }
-    return { high: acListMaxHighs.slice(0, 3), low: acListMaxLows.slice(0, 3) };
+    return { high: acListMaxHighs.slice(0, 2), low: acListMaxLows.slice(0, 2) };
   }
 
   useEffect(() => {
@@ -155,6 +165,34 @@ function Aco() {
     }, 30000);
     return () => clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    console.log(Acodata);
+  });
+
+  async function get24hrpercent() {
+    let temp: any[] = [];
+    await axios
+      .get(
+        `https://api.binance.com/api/v3/ticker/24hr?symbols=[${FuturePairs.map(
+          (i) => `"${i}"`
+        )}]`
+      )
+      .then((res) => {
+        temp = res.data.map((i: any) => {
+          return {
+            pair: i.symbol,
+            priceChangePercent: Number(i.priceChangePercent),
+          };
+        });
+        temp.sort((i: any, j: any) => {
+          if (i.priceChangePercent > j.priceChangePercent) return -1;
+          else if (i.priceChangePercent < j.priceChangePercent) return 1;
+          return 0;
+        });
+      });
+    return temp;
+  }
 
   return (
     <>
@@ -166,6 +204,7 @@ function Aco() {
             <Tr>
               <Th>Index</Th>
               <Th>Pair</Th>
+              <Th>DailyRank</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -173,7 +212,8 @@ function Aco() {
               <Tr>
                 <Td>{indx + 1}</Td>
 
-                <Td>{i}</Td>
+                <Td>{i.pair}</Td>
+                <Td>{i.percentrank}</Td>
               </Tr>
             ))}
           </Tbody>
@@ -188,7 +228,7 @@ async function getKlineData() {
   FuturePairs.forEach((item) => {
     promisarray.push(
       axios.get(
-        `https://api.binance.com/api/v3/klines?interval=15m&limit=100&symbol=${item}`
+        `https://api.binance.com/api/v3/klines?interval=1h&limit=100&symbol=${item}`
       )
     );
   });
