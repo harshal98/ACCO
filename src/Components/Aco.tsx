@@ -83,12 +83,17 @@ function Aco() {
         });
         get24hrpercent().then((r) => {
           setAcodata(
-            data1.map((item) => {
-              return {
-                pair: item,
-                percentrank: r.findIndex((i) => i.pair == item) + 1,
-              };
-            })
+            data1
+              .map((item) => {
+                return {
+                  pair: item,
+                  percentrank: r.findIndex((i) => i.pair == item) + 1,
+                };
+              })
+              .sort((i, j) => {
+                if (i.percentrank > j.percentrank) return 1;
+                else return -1;
+              })
           );
         });
       });
@@ -228,7 +233,7 @@ async function getKlineData() {
   FuturePairs.forEach((item) => {
     promisarray.push(
       axios.get(
-        `https://api.binance.com/api/v3/klines?interval=1h&limit=100&symbol=${item}`
+        `https://api.binance.com/api/v3/klines?interval=15m&limit=100&symbol=${item}`
       )
     );
   });
