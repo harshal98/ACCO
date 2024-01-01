@@ -10,6 +10,8 @@ import {
   Td,
   TableCaption,
   TableContainer,
+  Select,
+  HStack,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import Timer from "./Timer";
@@ -24,10 +26,11 @@ function Aco() {
   let [Acodata, setAcodata] = useState<{ pair: string; percentrank: number }[]>(
     []
   );
+  let [timeframe, setTimeframe] = useState("15m");
   function generateData() {
     let temp: Klinedata = [];
     let data1: string[] = [];
-    getKlineData()
+    getKlineData(timeframe)
       .then((res: any[]) =>
         res.forEach((r: AxiosResponse) => {
           let pairUrl = String(r.request.responseURL);
@@ -55,30 +58,35 @@ function Aco() {
             }
           });
           let result = getACmax(aclist);
+          if (result.high.length > 0 && result.low.length > 0) {
+            let countH = 0;
+            let prev = result.high[0].max;
+            result.high.forEach((i) => {
+              if (i.max > prev) countH++;
+              prev = i.max;
+            });
+            let countL = 0;
+            prev = result.low[0].max;
+            result.low.forEach((i) => {
+              if (i.max < prev) countL++;
+              prev = i.max;
+            });
+            let h24status = true;
+            let start = timeframe == "15m" ? 95 : timeframe == "1h" ? 23 : 0;
+            let end =
+              timeframe == "15m" ? 95 - 4 * 2 : timeframe == "1h" ? 21 : 0;
+            let statusarray = item.kline.slice(
+              item.kline.length - 1 - start,
+              item.kline.length - 1 - end
+            );
+            let lastprice = item.kline[item.kline.length - 1].close;
+            statusarray.forEach((i) => {
+              if (lastprice < i.close * 0.99) h24status = false;
+            });
 
-          let countH = 0;
-          let prev = result.high[0].max;
-          result.high.forEach((i) => {
-            if (i.max > prev) countH++;
-            prev = i.max;
-          });
-          let countL = 0;
-          prev = result.low[0].max;
-          result.low.forEach((i) => {
-            if (i.max < prev) countL++;
-            prev = i.max;
-          });
-          let h24status = true;
-          let statusarray = item.kline.slice(
-            item.kline.length - 1 - 23,
-            item.kline.length - 1 - 23 + 2
-          );
-          let lastprice = item.kline[item.kline.length - 1].close;
-          statusarray.forEach((i) => {
-            if (lastprice < i.close * 0.99) h24status = false;
-          });
-          if (countH > 0 && countL > 0 && h24status) {
-            data1.push(item.pair);
+            if (countH > 0 && countL > 0 && h24status) {
+              data1.push(item.pair);
+            }
           }
         });
         get24hrpercent().then((r) => {
@@ -169,11 +177,11 @@ function Aco() {
       generateData(), setresetcd((r) => r + 1);
     }, 30000);
     return () => clearInterval(t);
-  }, []);
+  }, [timeframe]);
 
-  useEffect(() => {
-    console.log(Acodata);
-  });
+  // useEffect(() => {
+  //   console.log(Acodata);
+  // });
 
   async function get24hrpercent() {
     let temp: any[] = [];
@@ -201,7 +209,21 @@ function Aco() {
 
   return (
     <>
-      <Timer count={resetcd}></Timer>
+      <HStack>
+        <Timer count={resetcd}></Timer>
+        <Select
+          defaultValue={"15m"}
+          onChange={(e) => {
+            //console.log(e.target.value);
+            setTimeframe(e.target.value);
+            setresetcd((r) => r + 1);
+          }}
+        >
+          <option value="15m">15 Minute</option>
+          <option value="1h">1 Hour</option>
+          <option value="4h">4 Hour</option>
+        </Select>
+      </HStack>
       <TableContainer>
         <Table variant="striped" colorScheme="teal" size="lg">
           <TableCaption>Accelerator Oscillator</TableCaption>
@@ -214,7 +236,7 @@ function Aco() {
           </Thead>
           <Tbody>
             {Acodata.map((i, indx) => (
-              <Tr>
+              <Tr key={indx}>
                 <Td>{indx + 1}</Td>
 
                 <Td>{i.pair}</Td>
@@ -228,12 +250,12 @@ function Aco() {
   );
 }
 
-async function getKlineData() {
+async function getKlineData(time: string) {
   let promisarray: any[] = [];
   FuturePairs.forEach((item) => {
     promisarray.push(
       axios.get(
-        `https://api.binance.com/api/v3/klines?interval=15m&limit=100&symbol=${item}`
+        `https://api.binance.com/api/v3/klines?interval=${time}&limit=100&symbol=${item}`
       )
     );
   });
