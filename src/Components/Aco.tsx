@@ -48,6 +48,8 @@ function Aco() {
         })
       )
       .then(() => {
+        //console.log(temp);
+
         temp.forEach((item) => {
           let ac = new AC();
           let aclist: number[] = [];
@@ -58,19 +60,26 @@ function Aco() {
             }
           });
           let result = getACmax(aclist);
-          if (result.high.length > 0 && result.low.length > 0) {
-            let countH = 0;
-            let prev = result.high[0].max;
-            result.high.forEach((i) => {
-              if (i.max > prev) countH++;
-              prev = i.max;
-            });
-            let countL = 0;
-            prev = result.low[0].max;
-            result.low.forEach((i) => {
-              if (i.max < prev) countL++;
-              prev = i.max;
-            });
+
+          if (result.high.length > 2) {
+            // let countH = 0;
+            // let prev = result.high[0].max;
+            // result.high.forEach((i) => {
+            //   if (i.max > prev) countH++;
+            //   prev = i.max;
+            // });
+            // let countL = 0;
+            // prev = result.low[0].max;
+            // result.low.forEach((i) => {
+            //   if (i.max < prev) countL++;
+            //   prev = i.max;
+            // });
+
+            // let lastHigh = result.high[0].max;
+            // let status = true;
+            // for (let x = 1; x < 3; x++) {
+            //   if (lastHigh < result.high[x].max) status = false;
+            // }
             let h24status = true;
             let start = timeframe == "15m" ? 95 : timeframe == "1h" ? 23 : 0;
             let end =
@@ -84,7 +93,12 @@ function Aco() {
               if (lastprice < i.close * 0.99) h24status = false;
             });
 
-            if (countH > 0 && countL > 0 && h24status) {
+            if (
+              result.high[0].max > result.high[1].max &&
+              result.high[1].max < result.high[2].max &&
+              //h24status &&
+              aclist[aclist.length - 1] > 0
+            ) {
               data1.push(item.pair);
             }
           }
@@ -108,17 +122,17 @@ function Aco() {
   }
 
   function getACmax(aclist: number[]) {
-    let lowaclist: { indx: number; val: number }[] = [];
+    // let lowaclist: { indx: number; val: number }[] = [];
     let highaclist: { indx: number; val: number }[] = [];
 
-    for (let x = aclist.length - 1; x >= 0; x--) {
-      if (aclist[x] < 0) {
-        lowaclist.push({
-          indx: x,
-          val: aclist[x],
-        });
-      }
-    }
+    // for (let x = aclist.length - 1; x >= 0; x--) {
+    //   if (aclist[x] < 0) {
+    //     lowaclist.push({
+    //       indx: x,
+    //       val: aclist[x],
+    //     });
+    //   }
+    // }
     for (let x = aclist.length - 1; x >= 0; x--) {
       if (aclist[x] > 0) {
         highaclist.push({
@@ -130,24 +144,24 @@ function Aco() {
     }
 
     let acListMaxLows: { max: number }[] = [];
-    if (lowaclist.length > 0) {
-      let max = lowaclist[0].val;
+    // if (lowaclist.length > 0) {
+    //   let max = lowaclist[0].val;
 
-      let lastindex = lowaclist[0].indx;
-      for (let x = 1; x < lowaclist.length; x++) {
-        if (lastindex == lowaclist[x].indx + 1) {
-          if (max > lowaclist[x].val) {
-            max = lowaclist[x].val;
-          }
-          lastindex--;
-        } else {
-          acListMaxLows.push({ max });
-          lastindex = lowaclist[x].indx;
-          max = lowaclist[x].val;
-        }
-        if (x == lowaclist.length - 1) acListMaxLows.push({ max });
-      }
-    }
+    //   let lastindex = lowaclist[0].indx;
+    //   for (let x = 1; x < lowaclist.length; x++) {
+    //     if (lastindex == lowaclist[x].indx + 1) {
+    //       if (max > lowaclist[x].val) {
+    //         max = lowaclist[x].val;
+    //       }
+    //       lastindex--;
+    //     } else {
+    //       acListMaxLows.push({ max });
+    //       lastindex = lowaclist[x].indx;
+    //       max = lowaclist[x].val;
+    //     }
+    //     if (x == lowaclist.length - 1) acListMaxLows.push({ max });
+    //   }
+    // }
 
     let acListMaxHighs: { max: number }[] = [];
     if (highaclist.length > 0) {
@@ -168,7 +182,7 @@ function Aco() {
         if (x == highaclist.length - 1) acListMaxHighs.push({ max });
       }
     }
-    return { high: acListMaxHighs.slice(0, 2), low: acListMaxLows.slice(0, 2) };
+    return { high: acListMaxHighs.slice(0, 3), low: acListMaxLows.slice(0, 2) };
   }
 
   useEffect(() => {
