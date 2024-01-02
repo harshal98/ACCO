@@ -80,18 +80,18 @@ function Aco() {
             // for (let x = 1; x < 3; x++) {
             //   if (lastHigh < result.high[x].max) status = false;
             // }
-            let h24status = true;
-            let start = timeframe == "15m" ? 95 : timeframe == "1h" ? 23 : 0;
-            let end =
-              timeframe == "15m" ? 95 - 4 * 2 : timeframe == "1h" ? 21 : 0;
-            let statusarray = item.kline.slice(
-              item.kline.length - 1 - start,
-              item.kline.length - 1 - end
-            );
-            let lastprice = item.kline[item.kline.length - 1].close;
-            statusarray.forEach((i) => {
-              if (lastprice < i.close * 0.99) h24status = false;
-            });
+            // let h24status = true;
+            // let start = timeframe == "15m" ? 95 : timeframe == "1h" ? 23 : 0;
+            // let end =
+            //   timeframe == "15m" ? 95 - 4 * 2 : timeframe == "1h" ? 21 : 0;
+            // let statusarray = item.kline.slice(
+            //   item.kline.length - 1 - start,
+            //   item.kline.length - 1 - end
+            // );
+            // let lastprice = item.kline[item.kline.length - 1].close;
+            // statusarray.forEach((i) => {
+            //   if (lastprice < i.close * 0.99) h24status = false;
+            // });
 
             if (
               result.high[0].max > result.high[1].max &&
