@@ -48,9 +48,15 @@ function Aco() {
           middle: number;
           upper: number;
         }[];
+        lastprice: number;
       }[] = [];
-
+      let lastprice = 0;
       FuturePairs.forEach((futurepair) => {
+        lastprice = Number(
+          res.m15m.filter((i) => i.pair == futurepair)[0].kline[
+            res.m15m.filter((i) => i.pair == futurepair)[0].kline.length - 1
+          ].c
+        );
         let BB15mArray = getBB(
           res.m15m.filter((i) => i.pair == futurepair)[0].kline
         );
@@ -61,24 +67,27 @@ function Aco() {
           res.h4.filter((i) => i.pair == futurepair)[0].kline
         );
 
-        temp1.push({ futurepair, BB15mArray, BB1hArray, BB4hArray });
+        temp1.push({ futurepair, BB15mArray, BB1hArray, BB4hArray, lastprice });
       });
 
       let temp2 = temp1
         .map((i) => {
           let bb15m =
             i.BB15mArray[i.BB15mArray.length - 1].upper >
-            i.BB15mArray[i.BB15mArray.length - 2].upper
+              i.BB15mArray[i.BB15mArray.length - 2].upper ||
+            i.BB15mArray[i.BB15mArray.length - 1].upper > i.lastprice * 1.05
               ? "Yes"
               : "No";
           let bb1h =
             i.BB1hArray[i.BB1hArray.length - 1].upper >
-            i.BB1hArray[i.BB1hArray.length - 2].upper
+              i.BB1hArray[i.BB1hArray.length - 2].upper ||
+            i.BB1hArray[i.BB1hArray.length - 1].upper > i.lastprice * 1.1
               ? "Yes"
               : "No";
           let bb4h =
             i.BB4hArray[i.BB4hArray.length - 1].upper >
-            i.BB4hArray[i.BB4hArray.length - 2].upper
+              i.BB4hArray[i.BB4hArray.length - 2].upper ||
+            i.BB4hArray[i.BB4hArray.length - 1].upper > i.lastprice * 1.1
               ? "Yes"
               : "No";
           return { pair: i.futurepair, bb15m, bb1h, bb4h };
