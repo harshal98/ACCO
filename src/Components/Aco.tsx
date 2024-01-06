@@ -1,6 +1,6 @@
 import { AC } from "@debut/indicators";
 import axios, { AxiosResponse } from "axios";
-import FuturePairs from "../FuturePairs";
+
 import {
   Table,
   Thead,
@@ -21,6 +21,7 @@ type Klinedata = {
   kline: { high: number; low: number; close: number }[];
 }[];
 function Aco() {
+  let FuturePairs: string[] = [];
   //let [data, setdata] = useState<Klinedata>([]);
   let [resetcd, setresetcd] = useState(0);
   let [Acodata, setAcodata] = useState<{ pair: string; percentrank: number }[]>(
@@ -168,6 +169,12 @@ function Aco() {
         if (x == highaclist.length - 1) acListMaxHighs.push({ max });
       }
     }
+
+    if (aclist[aclist.length - 1] > 0) {
+      acListMaxHighs = acListMaxHighs.slice(1, acListMaxHighs.length);
+    } else {
+      acListMaxLows = acListMaxLows.slice(1, acListMaxLows.length);
+    }
     return { high: acListMaxHighs.slice(0, 2), low: acListMaxLows.slice(0, 2) };
   }
 
@@ -205,6 +212,22 @@ function Aco() {
         });
       });
     return temp;
+  }
+  async function getKlineData(time: string) {
+    await axios
+      .get(
+        "https://raw.githubusercontent.com/harshal98/Pairs/main/FuturePairs.js"
+      )
+      .then((res) => (FuturePairs = res.data));
+    let promisarray: any[] = [];
+    FuturePairs.forEach((item) => {
+      promisarray.push(
+        axios.get(
+          `https://api.binance.com/api/v3/klines?interval=${time}&limit=100&symbol=${item}`
+        )
+      );
+    });
+    return axios.all(promisarray);
   }
 
   return (
@@ -250,15 +273,4 @@ function Aco() {
   );
 }
 
-async function getKlineData(time: string) {
-  let promisarray: any[] = [];
-  FuturePairs.forEach((item) => {
-    promisarray.push(
-      axios.get(
-        `https://api.binance.com/api/v3/klines?interval=${time}&limit=100&symbol=${item}`
-      )
-    );
-  });
-  return axios.all(promisarray);
-}
 export default Aco;
