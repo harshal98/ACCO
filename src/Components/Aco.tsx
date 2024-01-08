@@ -72,21 +72,24 @@ function Aco() {
               if (i.max < prev) countL++;
               prev = i.max;
             });
-            // let h24status = true;
-            // let start = timeframe == "15m" ? 95 : timeframe == "1h" ? 23 : 0;
-            // let end =
-            //   timeframe == "15m" ? 95 - 4 * 2 : timeframe == "1h" ? 21 : 0;
-            // let statusarray = item.kline.slice(
-            //   item.kline.length - 1 - start,
-            //   item.kline.length - 1 - end
-            // );
-            // let lastprice = item.kline[item.kline.length - 1].close;
-            // statusarray.forEach((i) => {
-            //   if (lastprice < i.close * 0.99) h24status = false;
-            // });
+            let h24status = true;
+            let start = timeframe == "15m" ? 95 : timeframe == "1h" ? 23 : 0;
+            let end =
+              timeframe == "15m" ? 95 - 4 * 2 : timeframe == "1h" ? 21 : 0;
+            let statusarray = item.kline.slice(
+              item.kline.length - 1 - start,
+              item.kline.length - 1 - end
+            );
+            let lastprice = item.kline[item.kline.length - 1].close;
+            statusarray.forEach((i) => {
+              if (lastprice < i.close * 0.99) h24status = false;
+            });
+            if (item.pair == "LDOUSDT")
+              console.log(result.lastmax, countL, result.low[0].max);
 
             if (
-              /*countH > 0 && */ countL > 0 /*&& h24status*/ &&
+              /*countH > 0 && */ countL > 0 &&
+              h24status &&
               result.lastmax > result.low[0].max
             ) {
               data1.push(item.pair);
@@ -175,11 +178,11 @@ function Aco() {
     let lastmax = 0;
 
     if (aclist[aclist.length - 1] > 0) {
-      acListMaxHighs = acListMaxHighs.slice(1, acListMaxHighs.length);
       lastmax = acListMaxHighs[0].max;
+      acListMaxHighs = acListMaxHighs.slice(1, acListMaxHighs.length);
     } else {
-      acListMaxLows = acListMaxLows.slice(1, acListMaxLows.length);
       lastmax = acListMaxLows[0].max;
+      acListMaxLows = acListMaxLows.slice(1, acListMaxLows.length);
     }
     return {
       high: acListMaxHighs.slice(0, 2),
