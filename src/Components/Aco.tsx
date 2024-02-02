@@ -58,44 +58,46 @@ function Aco() {
               aclist.push(val);
             }
           });
-          let result = getACmax(aclist);
-          if (result.high.length > 0 && result.low.length > 0) {
-            let countH = 0;
-            let prev = result.high[0].max;
-            result.high.forEach((i) => {
-              if (i.max > prev) countH++;
-              prev = i.max;
-            });
-            let countL = 0;
-            prev = result.low[0].max;
-            result.low.forEach((i) => {
-              if (i.max < prev) countL++;
-              prev = i.max;
-            });
-            let h24status = true;
-            let start = timeframe == "15m" ? 95 : timeframe == "1h" ? 23 : 0;
-            let end =
-              timeframe == "15m" ? 95 - 4 * 2 : timeframe == "1h" ? 21 : 0;
-            let statusarray = item.kline.slice(
-              item.kline.length - 1 - start,
-              item.kline.length - 1 - end
-            );
-            let lastprice = item.kline[item.kline.length - 1].close;
-            statusarray.forEach((i) => {
-              if (lastprice < i.close * 0.99) h24status = false;
-            });
-            if (item.pair == "LDOUSDT")
-              console.log(result.lastmax, countL, result.low[0].max);
 
-            if (
-              /*countH > 0 && */ countL > 0 &&
-              h24status &&
-              result.lastmax > result.low[0].max
-            ) {
-              data1.push(item.pair);
+          if (aclist.length > 0) {
+            let result = getACmax(aclist);
+            if (result.high.length > 0 && result.low.length > 0) {
+              let countH = 0;
+              let prev = result.high[0].max;
+              result.high.forEach((i) => {
+                if (i.max > prev) countH++;
+                prev = i.max;
+              });
+              let countL = 0;
+              prev = result.low[0].max;
+              result.low.forEach((i) => {
+                if (i.max < prev) countL++;
+                prev = i.max;
+              });
+              let h24status = true;
+              let start = timeframe == "15m" ? 95 : timeframe == "1h" ? 23 : 0;
+              let end =
+                timeframe == "15m" ? 95 - 4 * 2 : timeframe == "1h" ? 21 : 0;
+              let statusarray = item.kline.slice(
+                item.kline.length - 1 - start,
+                item.kline.length - 1 - end
+              );
+              let lastprice = item.kline[item.kline.length - 1].close;
+              statusarray.forEach((i) => {
+                if (lastprice < i.close * 0.99) h24status = false;
+              });
+
+              if (
+                /*countH > 0 && */ countL > 0 &&
+                h24status &&
+                result.lastmax > result.low[0].max
+              ) {
+                data1.push(item.pair);
+              }
             }
           }
         });
+
         get24hrpercent().then((r) => {
           setAcodata(
             data1
