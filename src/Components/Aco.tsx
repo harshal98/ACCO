@@ -49,6 +49,7 @@ function Aco() {
           upper: number;
         }[];
         lastprice: number;
+        h24_2hr: boolean;
       }[] = [];
       let lastprice = 0;
       FuturePairs.forEach((futurepair) => {
@@ -66,53 +67,42 @@ function Aco() {
         let BB4hArray = getBB(
           res.h4.filter((i) => i.pair == futurepair)[0].kline
         );
+        let kline15m = res.m15m.filter((i) => i.pair == futurepair)[0].kline;
 
-        temp1.push({ futurepair, BB15mArray, BB1hArray, BB4hArray, lastprice });
+        let max = kline15m[0].c;
+        kline15m.slice(88, 108).forEach((i) => {
+          if (max < i.c) max = i.c;
+        });
+        //console.log(kline15m, futurepair);
+
+        temp1.push({
+          futurepair,
+          BB15mArray,
+          BB1hArray,
+          BB4hArray,
+          lastprice,
+          h24_2hr: max < lastprice * 1.01,
+        });
       });
 
       let temp2 = temp1
+        .filter((i) => i.h24_2hr)
         .map((i) => {
-          let middif15m =
-            i.BB15mArray[i.BB15mArray.length - 1].middle -
-            i.BB15mArray[i.BB15mArray.length - 2].middle;
-          let lowdiff15m =
-            i.BB15mArray[i.BB15mArray.length - 1].lower -
-            i.BB15mArray[i.BB15mArray.length - 2].lower;
-
-          let middif1h =
-            i.BB1hArray[i.BB1hArray.length - 1].middle -
-            i.BB1hArray[i.BB1hArray.length - 2].middle;
-          let lowdiff1h =
-            i.BB1hArray[i.BB1hArray.length - 1].lower -
-            i.BB1hArray[i.BB1hArray.length - 2].lower;
-
-          let middif4h = 0;
-          let lowdiff4h = 0;
-          if (i.BB4hArray.length > 2) {
-            middif4h =
-              i.BB4hArray[i.BB4hArray.length - 1].middle -
-              i.BB4hArray[i.BB4hArray.length - 2].middle;
-            lowdiff4h =
-              i.BB4hArray[i.BB4hArray.length - 1].lower -
-              i.BB4hArray[i.BB4hArray.length - 2].lower;
-          }
           let bb15m =
             //middif15m > 0 ||
-            (middif15m > 0 && lowdiff15m < 0) ||
-            (middif15m < 0 && lowdiff15m > 0)
+            i.lastprice < i.BB15mArray[i.BB15mArray.length - 1].lower * 1.01
               ? "Yes"
               : "No";
           let bb1h =
-            (middif1h > 0 && lowdiff1h < 0) || (middif1h < 0 && lowdiff1h > 0)
+            i.lastprice < i.BB1hArray[i.BB1hArray.length - 1].lower * 1.01
               ? "Yes"
               : "No";
           let bb4h =
-            (middif4h > 0 && lowdiff4h < 0) || (middif4h < 0 && lowdiff4h > 0)
+            i.lastprice < i.BB4hArray[i.BB4hArray.length - 1].lower * 1.01
               ? "Yes"
               : "No";
           return { pair: i.futurepair, bb15m, bb1h, bb4h };
-        })
-        .filter((i) => i.bb1h == "Yes" && i.bb4h == "Yes");
+        });
       get24hrpercent().then((res) => {
         setAcodata(
           temp2
