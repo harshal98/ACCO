@@ -72,28 +72,47 @@ function Aco() {
 
       let temp2 = temp1
         .map((i) => {
+          let middif15m =
+            i.BB15mArray[i.BB15mArray.length - 1].middle -
+            i.BB15mArray[i.BB15mArray.length - 2].middle;
+          let lowdiff15m =
+            i.BB15mArray[i.BB15mArray.length - 1].lower -
+            i.BB15mArray[i.BB15mArray.length - 2].lower;
+
+          let middif1h =
+            i.BB1hArray[i.BB1hArray.length - 1].middle -
+            i.BB1hArray[i.BB1hArray.length - 2].middle;
+          let lowdiff1h =
+            i.BB1hArray[i.BB1hArray.length - 1].lower -
+            i.BB1hArray[i.BB1hArray.length - 2].lower;
+
+          let middif4h = 0;
+          let lowdiff4h = 0;
+          if (i.BB4hArray.length > 2) {
+            middif4h =
+              i.BB4hArray[i.BB4hArray.length - 1].middle -
+              i.BB4hArray[i.BB4hArray.length - 2].middle;
+            lowdiff4h =
+              i.BB4hArray[i.BB4hArray.length - 1].lower -
+              i.BB4hArray[i.BB4hArray.length - 2].lower;
+          }
           let bb15m =
-            i.BB15mArray[i.BB15mArray.length - 1].upper >
-              i.BB15mArray[i.BB15mArray.length - 2].upper ||
-            i.BB15mArray[i.BB15mArray.length - 1].upper > i.lastprice * 1.05
+            //middif15m > 0 ||
+            (middif15m > 0 && lowdiff15m < 0) ||
+            (middif15m < 0 && lowdiff15m > 0)
               ? "Yes"
               : "No";
           let bb1h =
-            i.BB1hArray[i.BB1hArray.length - 1].upper >
-              i.BB1hArray[i.BB1hArray.length - 2].upper ||
-            i.BB1hArray[i.BB1hArray.length - 1].upper > i.lastprice * 1.1
+            (middif1h > 0 && lowdiff1h < 0) || (middif1h < 0 && lowdiff1h > 0)
               ? "Yes"
               : "No";
           let bb4h =
-            i.BB4hArray[i.BB4hArray.length - 1].upper >
-              i.BB4hArray[i.BB4hArray.length - 2].upper ||
-            i.BB4hArray[i.BB4hArray.length - 1].upper > i.lastprice * 1.1
+            (middif4h > 0 && lowdiff4h < 0) || (middif4h < 0 && lowdiff4h > 0)
               ? "Yes"
               : "No";
           return { pair: i.futurepair, bb15m, bb1h, bb4h };
         })
-        .filter((i) => i.bb15m == "Yes" && i.bb1h == "Yes" && i.bb4h == "Yes");
-
+        .filter((i) => i.bb1h == "Yes" && i.bb4h == "Yes");
       get24hrpercent().then((res) => {
         setAcodata(
           temp2
