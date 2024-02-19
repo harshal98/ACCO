@@ -10,6 +10,7 @@ import {
   TableCaption,
   TableContainer,
   HStack,
+  Button,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import Timer from "./Timer";
@@ -90,15 +91,21 @@ function Aco() {
         .map((i) => {
           let bb15m =
             //middif15m > 0 ||
-            i.lastprice < i.BB15mArray[i.BB15mArray.length - 1].lower * 1.01
+            i.lastprice < i.BB15mArray[i.BB15mArray.length - 1].lower * 1.01 ||
+            i.BB15mArray[i.BB15mArray.length - 1].upper <
+              i.BB15mArray[i.BB15mArray.length - 1].lower * 1.025
               ? "Yes"
               : "No";
           let bb1h =
-            i.lastprice < i.BB1hArray[i.BB1hArray.length - 1].lower * 1.01
+            i.lastprice < i.BB1hArray[i.BB1hArray.length - 1].lower * 1.01 ||
+            i.BB1hArray[i.BB1hArray.length - 1].upper <
+              i.BB1hArray[i.BB1hArray.length - 1].lower * 1.05
               ? "Yes"
               : "No";
           let bb4h =
-            i.lastprice < i.BB4hArray[i.BB4hArray.length - 1].lower * 1.01
+            i.lastprice < i.BB4hArray[i.BB4hArray.length - 1].lower * 1.01 ||
+            i.BB4hArray[i.BB4hArray.length - 1].upper <
+              i.BB4hArray[i.BB4hArray.length - 1].lower * 1.1
               ? "Yes"
               : "No";
           return { pair: i.futurepair, bb15m, bb1h, bb4h };
@@ -175,7 +182,7 @@ function Aco() {
               <Th>Index</Th>
               <Th>Pair</Th>
               <Th>DailyRank</Th>
-              <Th>BB4h</Th>
+              <Th>BB15m</Th>
               <Th>BB1h</Th>
               <Th>BB4h</Th>
             </Tr>
@@ -187,7 +194,13 @@ function Aco() {
 
                 <Td>{i.pair}</Td>
                 <Td>{i.percentrank}</Td>
-                <Td>{i.bb15m}</Td>
+                <Td>
+                  {i.bb15m == "Yes" ? (
+                    <Button colorScheme="purple">{i.bb15m}</Button>
+                  ) : (
+                    i.bb15m
+                  )}
+                </Td>
                 <Td>{i.bb1h}</Td>
                 <Td>{i.bb4h}</Td>
               </Tr>
