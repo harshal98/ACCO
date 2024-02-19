@@ -1,4 +1,4 @@
-import { BollingerBands } from "@debut/indicators";
+import { SuperTrend } from "@debut/indicators";
 import axios, { AxiosResponse } from "axios";
 import {
   Table,
@@ -24,9 +24,9 @@ function Aco() {
     {
       pair: string;
       percentrank: number;
-      bb15m: string;
-      bb1h: string;
-      bb4h: string;
+      ST15m: string;
+      ST1h: string;
+      ST4h: string;
     }[]
   >([]);
 
@@ -34,20 +34,14 @@ function Aco() {
     getAllTimeKline().then((res) => {
       let temp1: {
         futurepair: string;
-        BB15mArray: {
-          lower: number;
-          middle: number;
-          upper: number;
+        ST15mArray: {
+          value: number;
         }[];
-        BB1hArray: {
-          lower: number;
-          middle: number;
-          upper: number;
+        ST1hArray: {
+          value: number;
         }[];
-        BB4hArray: {
-          lower: number;
-          middle: number;
-          upper: number;
+        ST4hArray: {
+          value: number;
         }[];
         lastprice: number;
         h24_2hr: boolean;
@@ -59,13 +53,13 @@ function Aco() {
             res.m15m.filter((i) => i.pair == futurepair)[0].kline.length - 1
           ].c
         );
-        let BB15mArray = getBB(
+        let ST15mArray = getST(
           res.m15m.filter((i) => i.pair == futurepair)[0].kline
         );
-        let BB1hArray = getBB(
+        let ST1hArray = getST(
           res.h1.filter((i) => i.pair == futurepair)[0].kline
         );
-        let BB4hArray = getBB(
+        let ST4hArray = getST(
           res.h4.filter((i) => i.pair == futurepair)[0].kline
         );
         let kline15m = res.m15m.filter((i) => i.pair == futurepair)[0].kline;
@@ -74,42 +68,31 @@ function Aco() {
         kline15m.slice(88, 108).forEach((i) => {
           if (max < i.c) max = i.c;
         });
-        //console.log(kline15m, futurepair);
+        console.log(ST15mArray, futurepair);
 
         temp1.push({
           futurepair,
-          BB15mArray,
-          BB1hArray,
-          BB4hArray,
+          ST15mArray,
+          ST1hArray,
+          ST4hArray,
           lastprice,
           h24_2hr: max < lastprice * 1.01,
         });
       });
 
       let temp2 = temp1
-        .filter((i) => i.h24_2hr)
+
         .map((i) => {
-          let bb15m =
+          let ST15m =
             //middif15m > 0 ||
-            i.lastprice < i.BB15mArray[i.BB15mArray.length - 1].lower * 1.01 ||
-            i.BB15mArray[i.BB15mArray.length - 1].upper <
-              i.BB15mArray[i.BB15mArray.length - 1].lower * 1.025
-              ? "Yes"
-              : "No";
-          let bb1h =
-            i.lastprice < i.BB1hArray[i.BB1hArray.length - 1].lower * 1.01 ||
-            i.BB1hArray[i.BB1hArray.length - 1].upper <
-              i.BB1hArray[i.BB1hArray.length - 1].lower * 1.05
-              ? "Yes"
-              : "No";
-          let bb4h =
-            i.lastprice < i.BB4hArray[i.BB4hArray.length - 1].lower * 1.01 ||
-            i.BB4hArray[i.BB4hArray.length - 1].upper <
-              i.BB4hArray[i.BB4hArray.length - 1].lower * 1.1
-              ? "Yes"
-              : "No";
-          return { pair: i.futurepair, bb15m, bb1h, bb4h };
-        });
+            i.ST15mArray[i.ST15mArray.length - 1].value == -1 ? "Yes" : "No";
+          let ST1h =
+            i.ST1hArray[i.ST1hArray.length - 1].value == -1 ? "Yes" : "No";
+          let ST4h =
+            i.ST4hArray[i.ST4hArray.length - 1].value == -1 ? "Yes" : "No";
+          return { pair: i.futurepair, ST15m, ST1h, ST4h };
+        })
+        .filter((i) => i.ST15m == "Yes");
       get24hrpercent().then((res) => {
         setAcodata(
           temp2
@@ -182,9 +165,9 @@ function Aco() {
               <Th>Index</Th>
               <Th>Pair</Th>
               <Th>DailyRank</Th>
-              <Th>BB15m</Th>
-              <Th>BB1h</Th>
-              <Th>BB4h</Th>
+              <Th>ST15m</Th>
+              <Th>ST1h</Th>
+              <Th>ST4h</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -195,14 +178,26 @@ function Aco() {
                 <Td>{i.pair}</Td>
                 <Td>{i.percentrank}</Td>
                 <Td>
-                  {i.bb15m == "Yes" ? (
-                    <Button colorScheme="purple">{i.bb15m}</Button>
+                  {i.ST15m == "Yes" ? (
+                    <Button colorScheme="purple">{i.ST15m}</Button>
                   ) : (
-                    i.bb15m
+                    i.ST15m
                   )}
                 </Td>
-                <Td>{i.bb1h}</Td>
-                <Td>{i.bb4h}</Td>
+                <Td>
+                  {i.ST1h == "Yes" ? (
+                    <Button colorScheme="purple">{i.ST1h}</Button>
+                  ) : (
+                    i.ST1h
+                  )}
+                </Td>
+                <Td>
+                  {i.ST4h == "Yes" ? (
+                    <Button colorScheme="purple">{i.ST4h}</Button>
+                  ) : (
+                    i.ST4h
+                  )}
+                </Td>
               </Tr>
             ))}
           </Tbody>
@@ -228,15 +223,18 @@ async function getKlineData(time: string) {
     );
   });
   let res = await axios.all(promisarray);
-  let temp: { pair: string; kline: { c: number }[] }[] = [];
+  let temp: { pair: string; kline: { c: number; l: number; h: number }[] }[] =
+    [];
   res.forEach((r: AxiosResponse) => {
     let pairUrl = String(r.request.responseURL);
     pairUrl = pairUrl.substring(pairUrl.lastIndexOf("=") + 1);
-    let hc: { c: number }[] = [];
+    let hc: { c: number; l: number; h: number }[] = [];
 
     r.data.forEach((i: any[]) =>
       hc.push({
         c: Number(i[4]),
+        h: Number(i[2]),
+        l: Number(i[3]),
       })
     );
     temp.push({ pair: pairUrl, kline: hc });
@@ -253,19 +251,17 @@ async function getAllTimeKline() {
   return { m15m, h1, h4 };
 }
 
-function getBB(klinedata: { c: number }[]) {
-  let BB = new BollingerBands();
-  let BBarray: {
-    lower: number;
-    middle: number;
-    upper: number;
+function getST(klinedata: { c: number; l: number; h: number }[]) {
+  let ST = new SuperTrend(10, 2);
+  let STarray: {
+    value: number;
   }[] = [];
   klinedata.forEach((kline) => {
-    let val = BB.nextValue(kline.c);
+    let val = ST.nextValue(kline.h, kline.l, kline.c);
     if (val) {
-      BBarray.push(val);
+      STarray.push({ value: val.direction });
     }
   });
-  return BBarray;
+  return STarray;
 }
 export default Aco;
