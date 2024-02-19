@@ -92,7 +92,7 @@ function Aco() {
             i.ST4hArray[i.ST4hArray.length - 1].value == -1 ? "Yes" : "No";
           return { pair: i.futurepair, ST15m, ST1h, ST4h };
         })
-        .filter((i) => i.ST15m == "Yes");
+        .filter((i) => i.ST15m == "Yes" && i.ST1h == "Yes" && i.ST4h == "Yes");
       get24hrpercent().then((res) => {
         setAcodata(
           temp2
