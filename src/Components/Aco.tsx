@@ -68,7 +68,7 @@ function Aco() {
         kline15m.slice(88, 108).forEach((i) => {
           if (max < i.c) max = i.c;
         });
-        console.log(ST15mArray, futurepair);
+        // console.log(ST15mArray, futurepair);
 
         temp1.push({
           futurepair,
@@ -252,7 +252,7 @@ async function getAllTimeKline() {
 }
 
 function getST(klinedata: { c: number; l: number; h: number }[]) {
-  let ST = new SuperTrend(10, 2);
+  let ST = new SuperTrend(20, 2);
   let STarray: {
     value: number;
   }[] = [];
