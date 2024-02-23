@@ -27,6 +27,7 @@ function Aco() {
       ST15m: string;
       ST1h: string;
       ST4h: string;
+      percentagechange15m: number;
     }[]
   >([]);
 
@@ -45,6 +46,7 @@ function Aco() {
         }[];
         lastprice: number;
         h24_2hr: boolean;
+        percentagechange15m: number;
       }[] = [];
       let lastprice = 0;
       FuturePairs.forEach((futurepair) => {
@@ -70,6 +72,30 @@ function Aco() {
         });
         // console.log(ST15mArray, futurepair);
 
+        let percentagechange15m =
+          Number(
+            res.m15m.filter((i) => i.pair == futurepair)[0].kline[
+              res.m15m.filter((i) => i.pair == futurepair)[0].kline.length - 1
+            ].c
+          ) /
+          Number(
+            res.m15m.filter((i) => i.pair == futurepair)[0].kline[
+              res.m15m.filter((i) => i.pair == futurepair)[0].kline.length - 2
+            ].c
+          );
+        // console.log(
+        //   Number(
+        //     res.m15m.filter((i) => i.pair == futurepair)[0].kline[
+        //       res.m15m.filter((i) => i.pair == futurepair)[0].kline.length - 1
+        //     ].c
+        //   ),
+        //   Number(
+        //     res.m15m.filter((i) => i.pair == futurepair)[0].kline[
+        //       res.m15m.filter((i) => i.pair == futurepair)[0].kline.length - 2
+        //     ].c
+        //   ),
+        //   futurepair
+        // );
         temp1.push({
           futurepair,
           ST15mArray,
@@ -77,6 +103,7 @@ function Aco() {
           ST4hArray,
           lastprice,
           h24_2hr: max < lastprice * 1.01,
+          percentagechange15m,
         });
       });
 
@@ -90,7 +117,14 @@ function Aco() {
             i.ST1hArray[i.ST1hArray.length - 1].value == -1 ? "Yes" : "No";
           let ST4h =
             i.ST4hArray[i.ST4hArray.length - 1].value == -1 ? "Yes" : "No";
-          return { pair: i.futurepair, ST15m, ST1h, ST4h };
+          i.percentagechange15m;
+          return {
+            pair: i.futurepair,
+            ST15m,
+            ST1h,
+            ST4h,
+            percentagechange15m: (i.percentagechange15m - 1) * 100,
+          };
         })
         .filter((i) => i.ST15m == "Yes" && i.ST1h == "Yes" && i.ST4h == "Yes");
       get24hrpercent().then((res) => {
@@ -164,6 +198,7 @@ function Aco() {
             <Tr>
               <Th>Index</Th>
               <Th>Pair</Th>
+              <Th>15M%</Th>
               <Th>DailyRank</Th>
               <Th>ST15m</Th>
               <Th>ST1h</Th>
@@ -176,6 +211,16 @@ function Aco() {
                 <Td>{indx + 1}</Td>
 
                 <Td>{i.pair}</Td>
+
+                <Td>
+                  {i.percentagechange15m > 0 ? (
+                    <Button colorScheme="purple">
+                      {i.percentagechange15m.toPrecision(2)}
+                    </Button>
+                  ) : (
+                    i.percentagechange15m.toPrecision(2)
+                  )}
+                </Td>
                 <Td>{i.percentrank}</Td>
                 <Td>
                   {i.ST15m == "Yes" ? (
