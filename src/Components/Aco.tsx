@@ -34,19 +34,31 @@ function Aco() {
       let temp1: {
         futurepair: string;
         BB15mArray: {
-          lower: number;
-          middle: number;
-          upper: number;
+          BBpercent: number;
+          cprice: number;
+          BBval: {
+            lower: number;
+            middle: number;
+            upper: number;
+          };
         }[];
         BB1hArray: {
-          lower: number;
-          middle: number;
-          upper: number;
+          BBpercent: number;
+          cprice: number;
+          BBval: {
+            lower: number;
+            middle: number;
+            upper: number;
+          };
         }[];
         BB4hArray: {
-          lower: number;
-          middle: number;
-          upper: number;
+          BBpercent: number;
+          cprice: number;
+          BBval: {
+            lower: number;
+            middle: number;
+            upper: number;
+          };
         }[];
         lastprice: number;
       }[] = [];
@@ -66,53 +78,21 @@ function Aco() {
         let BB4hArray = getBB(
           res.h4.filter((i) => i.pair == futurepair)[0].kline
         );
+        console.log(futurepair, BB15mArray, BB1hArray, BB4hArray);
 
         temp1.push({ futurepair, BB15mArray, BB1hArray, BB4hArray, lastprice });
       });
 
       let temp2 = temp1
         .map((i) => {
-          let middif15m =
-            i.BB15mArray[i.BB15mArray.length - 1].middle -
-            i.BB15mArray[i.BB15mArray.length - 2].middle;
-          let lowdiff15m =
-            i.BB15mArray[i.BB15mArray.length - 1].lower -
-            i.BB15mArray[i.BB15mArray.length - 2].lower;
-
-          let middif1h =
-            i.BB1hArray[i.BB1hArray.length - 1].middle -
-            i.BB1hArray[i.BB1hArray.length - 2].middle;
-          let lowdiff1h =
-            i.BB1hArray[i.BB1hArray.length - 1].lower -
-            i.BB1hArray[i.BB1hArray.length - 2].lower;
-
-          let middif4h = 0;
-          let lowdiff4h = 0;
-          if (i.BB4hArray.length > 2) {
-            middif4h =
-              i.BB4hArray[i.BB4hArray.length - 1].middle -
-              i.BB4hArray[i.BB4hArray.length - 2].middle;
-            lowdiff4h =
-              i.BB4hArray[i.BB4hArray.length - 1].lower -
-              i.BB4hArray[i.BB4hArray.length - 2].lower;
-          }
           let bb15m =
             //middif15m > 0 ||
-            (middif15m > 0 && lowdiff15m < 0) ||
-            (middif15m < 0 && lowdiff15m > 0)
-              ? "Yes"
-              : "No";
-          let bb1h =
-            (middif1h > 0 && lowdiff1h < 0) || (middif1h < 0 && lowdiff1h > 0)
-              ? "Yes"
-              : "No";
-          let bb4h =
-            (middif4h > 0 && lowdiff4h < 0) || (middif4h < 0 && lowdiff4h > 0)
-              ? "Yes"
-              : "No";
+            calBBlast10(i.BB15mArray, i.futurepair);
+          let bb1h = calBBlast10(i.BB1hArray);
+          let bb4h = calBBlast10(i.BB4hArray);
           return { pair: i.futurepair, bb15m, bb1h, bb4h };
         })
-        .filter((i) => i.bb1h == "Yes" && i.bb4h == "Yes");
+        .filter((i) => i.bb15m == "Yes"); //|| i.bb1h == "Yes" || i.bb4h == "Yes");
       get24hrpercent().then((res) => {
         setAcodata(
           temp2
@@ -253,16 +233,61 @@ async function getAllTimeKline() {
 function getBB(klinedata: { c: number }[]) {
   let BB = new BollingerBands();
   let BBarray: {
-    lower: number;
-    middle: number;
-    upper: number;
+    BBpercent: number;
+    cprice: number;
+    BBval: {
+      lower: number;
+      middle: number;
+      upper: number;
+    };
   }[] = [];
   klinedata.forEach((kline) => {
     let val = BB.nextValue(kline.c);
     if (val) {
-      BBarray.push(val);
+      BBarray.push({
+        BBpercent: (kline.c - val.lower) / (val.upper - val.lower),
+        cprice: kline.c,
+        BBval: val,
+      });
     }
   });
+
   return BBarray;
+}
+
+function calBBlast10(
+  BBArray: {
+    BBpercent: number;
+    cprice: number;
+    BBval: {
+      lower: number;
+      middle: number;
+      upper: number;
+    };
+  }[],
+  _pair?: string
+) {
+  let max = 0;
+  let min = 99999;
+  let indx = 0;
+  BBArray = BBArray.slice(BBArray.length - 13, BBArray.length - 1);
+
+  for (let x = BBArray.length - 1; x >= 0; x--) {
+    if (min > BBArray[x].BBpercent) {
+      min = BBArray[x].BBpercent;
+      indx = x;
+    }
+  }
+
+  for (let x = indx - 1; x >= 0; x--) {
+    if (max < BBArray[x].BBpercent) {
+      max = BBArray[x].BBpercent;
+    }
+  }
+
+  console.log(_pair, indx);
+
+  if (min < 0.3 && max > 0.7 && indx < 8) return "Yes";
+  return "No";
 }
 export default Aco;
