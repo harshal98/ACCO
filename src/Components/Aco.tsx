@@ -287,7 +287,7 @@ function calBBlast10(
 
   console.log(_pair, indx);
 
-  if (min < 0.3 && max > 0.7 && indx < 8) return "Yes";
+  if (min < 0.4 && max > 0.6 && indx <= 10) return "Yes";
   return "No";
 }
 export default Aco;
