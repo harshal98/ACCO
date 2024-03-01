@@ -107,26 +107,24 @@ function Aco() {
         });
       });
 
-      let temp2 = temp1
-
-        .map((i) => {
-          let ST15m =
-            //middif15m > 0 ||
-            i.ST15mArray[i.ST15mArray.length - 1].value == -1 ? "Yes" : "No";
-          let ST1h =
-            i.ST1hArray[i.ST1hArray.length - 1].value == -1 ? "Yes" : "No";
-          let ST4h =
-            i.ST4hArray[i.ST4hArray.length - 1].value == -1 ? "Yes" : "No";
-          i.percentagechange15m;
-          return {
-            pair: i.futurepair,
-            ST15m,
-            ST1h,
-            ST4h,
-            percentagechange15m: (i.percentagechange15m - 1) * 100,
-          };
-        })
-        .filter((i) => i.ST15m == "Yes" && i.ST1h == "Yes" && i.ST4h == "Yes");
+      let temp2 = temp1.map((i) => {
+        let ST15m =
+          //middif15m > 0 ||
+          i.ST15mArray[i.ST15mArray.length - 1].value == -1 ? "Yes" : "No";
+        let ST1h =
+          i.ST1hArray[i.ST1hArray.length - 1].value == -1 ? "Yes" : "No";
+        let ST4h =
+          i.ST4hArray[i.ST4hArray.length - 1].value == -1 ? "Yes" : "No";
+        i.percentagechange15m;
+        return {
+          pair: i.futurepair,
+          ST15m,
+          ST1h,
+          ST4h,
+          percentagechange15m: (i.percentagechange15m - 1) * 100,
+        };
+      });
+      //.filter((i) => i.ST15m == "Yes" && i.ST1h == "Yes" && i.ST4h == "Yes");
       get24hrpercent().then((res) => {
         setAcodata(
           temp2
