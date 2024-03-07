@@ -71,6 +71,46 @@ function Aco() {
           if (max < i.c) max = i.c;
         });
 
+        let vma: { val: number; vol: number }[] = [];
+        let kline15m = res.m15m.filter((i) => i.pair == futurepair)[0].kline;
+        let sum = 0;
+        kline15m
+          .slice(kline15m.length - 29, kline15m.length - 4)
+          .forEach((i) => (sum = sum + i.v)),
+          vma.push({ val: sum / 25, vol: kline15m[kline15m.length - 5].v });
+        sum = 0;
+
+        kline15m
+          .slice(kline15m.length - 28, kline15m.length - 3)
+          .forEach((i) => (sum = sum + i.v)),
+          vma.push({ val: sum / 25, vol: kline15m[kline15m.length - 4].v });
+        sum = 0;
+
+        kline15m
+          .slice(kline15m.length - 27, kline15m.length - 2)
+          .forEach((i) => (sum = sum + i.v)),
+          vma.push({ val: sum / 25, vol: kline15m[kline15m.length - 3].v });
+        sum = 0;
+
+        kline15m
+          .slice(kline15m.length - 26, kline15m.length - 1)
+          .forEach((i) => (sum = sum + i.v)),
+          vma.push({ val: sum / 25, vol: kline15m[kline15m.length - 2].v });
+        sum = 0;
+
+        kline15m
+          .slice(kline15m.length - 25, kline15m.length)
+          .forEach((i) => (sum = sum + i.v)),
+          vma.push({ val: sum / 25, vol: kline15m[kline15m.length - 1].v });
+
+        console.log(vma, futurepair);
+
+        let volcond = false;
+
+        vma.forEach((i) => {
+          if (i.vol > 2 * i.val) volcond = true;
+        });
+
         //console.log(max, futurepair);
 
         let percentagechange15m =
@@ -97,7 +137,7 @@ function Aco() {
         //   ),
         //   futurepair
         // );
-        if (max < kline1h[kline1h.length - 1].c)
+        if (max < kline1h[kline1h.length - 1].c && volcond)
           temp1.push({
             futurepair,
             ST15mArray,
@@ -286,18 +326,21 @@ async function getKlineData(time: string) {
     );
   });
   let res = await axios.all(promisarray);
-  let temp: { pair: string; kline: { c: number; l: number; h: number }[] }[] =
-    [];
+  let temp: {
+    pair: string;
+    kline: { c: number; l: number; h: number; v: number }[];
+  }[] = [];
   res.forEach((r: AxiosResponse) => {
     let pairUrl = String(r.request.responseURL);
     pairUrl = pairUrl.substring(pairUrl.lastIndexOf("=") + 1);
-    let hc: { c: number; l: number; h: number }[] = [];
+    let hc: { c: number; l: number; h: number; v: number }[] = [];
 
     r.data.forEach((i: any[]) =>
       hc.push({
         c: Number(i[4]),
         h: Number(i[2]),
         l: Number(i[3]),
+        v: Number(i[5]),
       })
     );
     temp.push({ pair: pairUrl, kline: hc });
