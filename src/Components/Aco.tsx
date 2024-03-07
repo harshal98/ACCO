@@ -70,7 +70,8 @@ function Aco() {
           ].c
         );
         let BB15mArray = getBB(
-          res.m15m.filter((i) => i.pair == futurepair)[0].kline
+          res.m15m.filter((i) => i.pair == futurepair)[0].kline,
+          futurepair
         );
         let BB1hArray = getBB(
           res.h1.filter((i) => i.pair == futurepair)[0].kline
@@ -78,7 +79,6 @@ function Aco() {
         let BB4hArray = getBB(
           res.h4.filter((i) => i.pair == futurepair)[0].kline
         );
-        console.log(futurepair, BB15mArray, BB1hArray, BB4hArray);
 
         temp1.push({ futurepair, BB15mArray, BB1hArray, BB4hArray, lastprice });
       });
@@ -230,7 +230,7 @@ async function getAllTimeKline() {
   return { m15m, h1, h4 };
 }
 
-function getBB(klinedata: { c: number }[]) {
+function getBB(klinedata: { c: number }[], _pair?: string) {
   let BB = new BollingerBands();
   let BBarray: {
     BBpercent: number;
@@ -251,7 +251,15 @@ function getBB(klinedata: { c: number }[]) {
       });
     }
   });
-
+  if (_pair)
+    console.log(
+      StandardDeviation(
+        BBarray.slice(BBarray.length - 20, BBarray.length).map(
+          (i) => i.BBval.upper
+        )
+      ),
+      _pair
+    );
   return BBarray;
 }
 
@@ -270,6 +278,7 @@ function calBBlast10(
   let max = 0;
   let min = 99999;
   let indx = 0;
+
   BBArray = BBArray.slice(BBArray.length - 13, BBArray.length - 1);
 
   for (let x = BBArray.length - 1; x >= 0; x--) {
@@ -285,9 +294,20 @@ function calBBlast10(
     }
   }
 
-  console.log(_pair, indx);
-
   if (min < 0.4 && max > 0.6 && indx <= 10) return "Yes";
   return "No";
+}
+
+function StandardDeviation(arr: number[]) {
+  // Creating the mean with Array.reduce
+
+  let count = 0;
+
+  let prev = 0;
+  arr.forEach((i) => {
+    if (prev >= i) count++;
+    prev = i;
+  });
+  return count;
 }
 export default Aco;
