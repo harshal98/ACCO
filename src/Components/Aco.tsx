@@ -1,4 +1,4 @@
-import { SuperTrend } from "@debut/indicators";
+import { BollingerBands, SuperTrend } from "@debut/indicators";
 import axios, { AxiosResponse } from "axios";
 import {
   Table,
@@ -34,6 +34,24 @@ function Aco() {
   function generateData() {
     getAllTimeKline().then((res) => {
       let temp1: {
+        kline15m: {
+          c: number;
+          l: number;
+          h: number;
+          v: number;
+        }[];
+        kline1h: {
+          c: number;
+          l: number;
+          h: number;
+          v: number;
+        }[];
+        kline4h: {
+          c: number;
+          l: number;
+          h: number;
+          v: number;
+        }[];
         futurepair: string;
         ST15mArray: {
           value: number;
@@ -48,23 +66,22 @@ function Aco() {
         h24_2hr: boolean;
         percentagechange15m: number;
       }[] = [];
+
       let lastprice = 0;
+
       FuturePairs.forEach((futurepair) => {
         lastprice = Number(
           res.m15m.filter((i) => i.pair == futurepair)[0].kline[
             res.m15m.filter((i) => i.pair == futurepair)[0].kline.length - 1
           ].c
         );
-        let ST15mArray = getST(
-          res.m15m.filter((i) => i.pair == futurepair)[0].kline
-        );
-        let ST1hArray = getST(
-          res.h1.filter((i) => i.pair == futurepair)[0].kline
-        );
-        let ST4hArray = getST(
-          res.h4.filter((i) => i.pair == futurepair)[0].kline
-        );
+
+        let kline15m = res.m15m.filter((i) => i.pair == futurepair)[0].kline;
         let kline1h = res.h1.filter((i) => i.pair == futurepair)[0].kline;
+        let kline4h = res.h4.filter((i) => i.pair == futurepair)[0].kline;
+        let ST15mArray = getST(kline15m);
+        let ST1hArray = getST(kline1h);
+        let ST4hArray = getST(kline4h);
 
         let max = 0;
         kline1h.slice(kline1h.length - 25, kline1h.length - 23).forEach((i) => {
@@ -72,7 +89,7 @@ function Aco() {
         });
 
         let vma: { val: number; vol: number }[] = [];
-        let kline15m = res.m15m.filter((i) => i.pair == futurepair)[0].kline;
+
         let sum = 0;
         kline15m
           .slice(kline15m.length - 29, kline15m.length - 4)
@@ -103,13 +120,11 @@ function Aco() {
           .forEach((i) => (sum = sum + i.v)),
           vma.push({ val: sum / 25, vol: kline15m[kline15m.length - 1].v });
 
-        console.log(vma, futurepair);
+        // let volcond = false;
 
-        let volcond = false;
-
-        vma.forEach((i) => {
-          if (i.vol > 2 * i.val) volcond = true;
-        });
+        // vma.forEach((i) => {
+        //   if (i.vol > 2 * i.val) volcond = true;
+        // });
 
         //console.log(max, futurepair);
 
@@ -137,7 +152,7 @@ function Aco() {
         //   ),
         //   futurepair
         // );
-        if (max < kline1h[kline1h.length - 1].c && volcond)
+        if (max < kline1h[kline1h.length - 1].c /*&& volcond*/)
           temp1.push({
             futurepair,
             ST15mArray,
@@ -146,6 +161,9 @@ function Aco() {
             lastprice,
             h24_2hr: max < lastprice * 1.01,
             percentagechange15m,
+            kline15m,
+            kline1h,
+            kline4h,
           });
       });
 
@@ -154,19 +172,20 @@ function Aco() {
           let ST15m =
             //middif15m > 0 ||
             i.ST15mArray.length > 0
-              ? i.ST15mArray[i.ST15mArray.length - 1].value == -1
+              ? i.ST15mArray[i.ST15mArray.length - 1].value == -1 &&
+                BB(i.kline15m)
                 ? "Yes"
                 : "No"
               : "Yes";
           let ST1h =
             i.ST1hArray.length > 0
-              ? i.ST1hArray[i.ST1hArray.length - 1].value == -1
+              ? i.ST1hArray[i.ST1hArray.length - 1].value == -1 && BB(i.kline1h)
                 ? "Yes"
                 : "No"
               : "Yes";
           let ST4h =
             i.ST4hArray.length > 0
-              ? i.ST4hArray[i.ST4hArray.length - 1].value == -1
+              ? i.ST4hArray[i.ST4hArray.length - 1].value == -1 //&& BB(i.kline4h)
                 ? "Yes"
                 : "No"
               : "Yes";
@@ -369,5 +388,42 @@ function getST(klinedata: { c: number; l: number; h: number }[]) {
     }
   });
   return STarray;
+}
+
+function BB(klinedata: { c: number; l: number; h: number }[]) {
+  let BB = new BollingerBands();
+  let BBarray: {
+    BBpercent: number;
+    cprice: number;
+    BBval: {
+      lower: number;
+      middle: number;
+      upper: number;
+    };
+  }[] = [];
+  klinedata.forEach((kline) => {
+    let val = BB.nextValue(kline.c);
+    if (val) {
+      BBarray.push({
+        BBpercent: (kline.c - val.lower) / (val.upper - val.lower),
+        cprice: kline.c,
+        BBval: val,
+      });
+    }
+  });
+
+  return StandardDeviation(BBarray.map((i) => i.BBval.upper));
+
+  function StandardDeviation(arr: number[]) {
+    arr = arr.slice(arr.length - 10, arr.length);
+    // Creating the mean with Array.reduce
+
+    let sumlast5 = 0;
+    let sumnext5 = 0;
+    //let prev = 0;
+    arr.slice(0, 6).forEach((i) => (sumnext5 = +i));
+    arr.slice(6, 10).forEach((i) => (sumlast5 = +i));
+    return sumnext5 - sumlast5 > 0.03;
+  }
 }
 export default Aco;
