@@ -70,11 +70,11 @@ function Aco() {
           ].c
         );
         let BB15mArray = getBB(
-          res.m15m.filter((i) => i.pair == futurepair)[0].kline,
-          futurepair
+          res.m15m.filter((i) => i.pair == futurepair)[0].kline
         );
         let BB1hArray = getBB(
-          res.h1.filter((i) => i.pair == futurepair)[0].kline
+          res.h1.filter((i) => i.pair == futurepair)[0].kline,
+          futurepair
         );
         let BB4hArray = getBB(
           res.h4.filter((i) => i.pair == futurepair)[0].kline
@@ -87,7 +87,7 @@ function Aco() {
         .map((i) => {
           let bb15m =
             //middif15m > 0 ||
-            calBBlast10(i.BB15mArray, i.futurepair);
+            calBBlast10(i.BB15mArray);
           let bb1h = calBBlast10(i.BB1hArray);
           let bb4h = calBBlast10(i.BB4hArray);
           return { pair: i.futurepair, bb15m, bb1h, bb4h };
@@ -251,15 +251,9 @@ function getBB(klinedata: { c: number }[], _pair?: string) {
       });
     }
   });
-  if (_pair)
-    console.log(
-      StandardDeviation(
-        BBarray.slice(BBarray.length - 20, BBarray.length).map(
-          (i) => i.BBval.upper
-        )
-      ),
-      _pair
-    );
+  let std = StandardDeviation(BBarray.map((i) => i.BBval.upper));
+  if (_pair && std) console.log(std, _pair);
+
   return BBarray;
 }
 
@@ -299,15 +293,14 @@ function calBBlast10(
 }
 
 function StandardDeviation(arr: number[]) {
+  arr = arr.slice(arr.length - 20, arr.length);
   // Creating the mean with Array.reduce
 
-  let count = 0;
-
-  let prev = 0;
-  arr.forEach((i) => {
-    if (prev >= i) count++;
-    prev = i;
-  });
-  return count;
+  let sumlast5 = 0;
+  let sumnext5 = 0;
+  //let prev = 0;
+  arr.slice(0, 11).forEach((i) => (sumnext5 = +i));
+  arr.slice(11, 20).forEach((i) => (sumlast5 = +i));
+  return sumnext5 - sumlast5 > 0.03;
 }
 export default Aco;
