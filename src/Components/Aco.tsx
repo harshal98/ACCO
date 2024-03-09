@@ -412,18 +412,35 @@ function BB(klinedata: { c: number; l: number; h: number }[]) {
     }
   });
 
-  return StandardDeviation(BBarray.map((i) => i.BBval.upper));
+  return StandardDeviation(BBarray);
 
-  function StandardDeviation(arr: number[]) {
-    arr = arr.slice(arr.length - 10, arr.length);
+  function StandardDeviation(
+    arr: {
+      BBpercent: number;
+      cprice: number;
+      BBval: {
+        lower: number;
+        middle: number;
+        upper: number;
+      };
+    }[]
+  ) {
+    let candles = 16;
+    arr = arr.slice(arr.length - candles, arr.length);
     // Creating the mean with Array.reduce
+    function calBBsumdiff(arr: number[]) {
+      let sumlast5 = 0;
+      let sumnext5 = 0;
+      //let prev = 0;
+      arr.slice(0, candles / 2 + 1).forEach((i) => (sumnext5 = +i));
+      arr.slice(candles / 2 + 1, candles).forEach((i) => (sumlast5 = +i));
+      return sumnext5 - sumlast5;
+    }
 
-    let sumlast5 = 0;
-    let sumnext5 = 0;
-    //let prev = 0;
-    arr.slice(0, 6).forEach((i) => (sumnext5 = +i));
-    arr.slice(6, 10).forEach((i) => (sumlast5 = +i));
-    return sumnext5 - sumlast5 > 0.03;
+    return (
+      calBBsumdiff(arr.map((i) => i.BBval.upper)) > 0 &&
+      calBBsumdiff(arr.map((i) => i.BBval.lower)) < 0
+    );
   }
 }
 export default Aco;
