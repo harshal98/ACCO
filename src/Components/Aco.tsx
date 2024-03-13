@@ -173,7 +173,7 @@ function Aco() {
             //middif15m > 0 ||
             i.ST15mArray.length > 0
               ? i.ST15mArray[i.ST15mArray.length - 1].value == -1 &&
-                BB(i.kline15m)
+                BB(i.kline15m, i.futurepair)
                 ? "Yes"
                 : "No"
               : "Yes";
@@ -390,7 +390,7 @@ function getST(klinedata: { c: number; l: number; h: number }[]) {
   return STarray;
 }
 
-function BB(klinedata: { c: number; l: number; h: number }[]) {
+function BB(klinedata: { c: number; l: number; h: number }[], _pair?: string) {
   let BB = new BollingerBands();
   let BBarray: {
     BBpercent: number;
@@ -412,35 +412,45 @@ function BB(klinedata: { c: number; l: number; h: number }[]) {
     }
   });
 
-  return StandardDeviation(BBarray);
+  return (
+    StandardDeviation(
+      BBarray.slice(BBarray.length - 20, BBarray.length).map(
+        (i) => i.BBval.upper - i.BBval.lower
+      ),
+      _pair
+    ) < 20 &&
+    StandardDeviation(
+      BBarray.slice(BBarray.length - 30, BBarray.length).map(
+        (i) => i.BBval.upper
+      ),
+      _pair
+    ) < 0.5
+  );
 
-  function StandardDeviation(
-    arr: {
-      BBpercent: number;
-      cprice: number;
-      BBval: {
-        lower: number;
-        middle: number;
-        upper: number;
-      };
-    }[]
-  ) {
-    let candles = 16;
-    arr = arr.slice(arr.length - candles, arr.length);
+  function StandardDeviation(bbarry: number[], _pair?: string) {
+    let arr = bbarry;
+
     // Creating the mean with Array.reduce
-    function calBBsumdiff(arr: number[]) {
-      let sumlast5 = 0;
-      let sumnext5 = 0;
-      //let prev = 0;
-      arr.slice(0, candles / 2 + 1).forEach((i) => (sumnext5 = +i));
-      arr.slice(candles / 2 + 1, candles).forEach((i) => (sumlast5 = +i));
-      return sumnext5 - sumlast5;
-    }
+    let mean =
+      arr.reduce((acc, curr) => {
+        return acc + curr;
+      }, 0) / arr.length;
 
-    return (
-      calBBsumdiff(arr.map((i) => i.BBval.upper)) > 0 &&
-      calBBsumdiff(arr.map((i) => i.BBval.lower)) < 0
-    );
+    // Assigning (value - mean) ^ 2 to
+    // every array item
+    arr = arr.map((k) => {
+      return (k - mean) ** 2;
+    });
+
+    // Calculating the sum of updated array
+    let sum = arr.reduce((acc, curr) => acc + curr, 0);
+
+    // Calculating the variance
+    //let variance = sum / arr.length
+
+    // Returning the standard deviation
+    console.log((Math.sqrt(sum / arr.length) / mean) * 100, mean, _pair);
+    return (Math.sqrt(sum / arr.length) / mean) * 100;
   }
 }
 export default Aco;
