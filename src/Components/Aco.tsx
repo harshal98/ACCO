@@ -102,7 +102,11 @@ function Aco() {
 
         //console.log(bb1d, futurepair);
 
-        if (bb1d == undefined ? true : bb1d.middle < lastprice)
+        if (
+          bb1d == undefined
+            ? true
+            : bb1d.middle < lastprice || bb1d.middle > lastprice * 1.15
+        )
           //max < kline1h[kline1h.length - 1].c)
           temp1.push({
             futurepair,
