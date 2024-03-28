@@ -80,19 +80,41 @@ function Aco() {
           res.h4.filter((i) => i.pair == futurepair)[0].kline
         );
 
-        temp1.push({ futurepair, BB15mArray, BB1hArray, BB4hArray, lastprice });
+        let kline1h = res.h1.filter((i) => i.pair == futurepair)[0].kline;
+        let max = 0;
+        kline1h.slice(kline1h.length - 24, kline1h.length - 22).forEach((i) => {
+          if (max < i.c) max = i.c;
+        });
+
+        if (max < lastprice)
+          temp1.push({
+            futurepair,
+            BB15mArray,
+            BB1hArray,
+            BB4hArray,
+            lastprice,
+          });
       });
 
       let temp2 = temp1
         .map((i) => {
           let bb15m =
-            //middif15m > 0 ||
-            calBBlast10(i.BB15mArray);
-          let bb1h = calBBlast10(i.BB1hArray);
-          let bb4h = calBBlast10(i.BB4hArray);
+            i.BB15mArray[i.BB15mArray.length - 1].BBpercent < 0.3 ||
+            i.BB15mArray[i.BB15mArray.length - 1].BBval.upper /
+              i.BB15mArray[i.BB15mArray.length - 1].BBval.lower <
+              1.025
+              ? "Yes"
+              : "No";
+
+          let bb1h =
+            i.BB1hArray[i.BB1hArray.length - 1].BBpercent > 0.2 ? "Yes" : "No";
+
+          let bb4h =
+            i.BB4hArray[i.BB4hArray.length - 1].BBpercent > 0.2 ? "Yes" : "No";
+
           return { pair: i.futurepair, bb15m, bb1h, bb4h };
         })
-        .filter((i) => i.bb15m == "Yes"); //|| i.bb1h == "Yes" || i.bb4h == "Yes");
+        .filter((i) => i.bb15m == "Yes"); //&& i.bb1h == "Yes" && i.bb4h == "Yes");
       get24hrpercent().then((res) => {
         setAcodata(
           temp2
@@ -251,56 +273,8 @@ function getBB(klinedata: { c: number }[], _pair?: string) {
       });
     }
   });
-  let std = StandardDeviation(BBarray.map((i) => i.BBval.upper));
-  if (_pair && std) console.log(std, _pair);
 
   return BBarray;
 }
 
-function calBBlast10(
-  BBArray: {
-    BBpercent: number;
-    cprice: number;
-    BBval: {
-      lower: number;
-      middle: number;
-      upper: number;
-    };
-  }[],
-  _pair?: string
-) {
-  let max = 0;
-  let min = 99999;
-  let indx = 0;
-
-  BBArray = BBArray.slice(BBArray.length - 13, BBArray.length - 1);
-
-  for (let x = BBArray.length - 1; x >= 0; x--) {
-    if (min > BBArray[x].BBpercent) {
-      min = BBArray[x].BBpercent;
-      indx = x;
-    }
-  }
-
-  for (let x = indx - 1; x >= 0; x--) {
-    if (max < BBArray[x].BBpercent) {
-      max = BBArray[x].BBpercent;
-    }
-  }
-
-  if (min < 0.4 && max > 0.6 && indx <= 10) return "Yes";
-  return "No";
-}
-
-function StandardDeviation(arr: number[]) {
-  arr = arr.slice(arr.length - 20, arr.length);
-  // Creating the mean with Array.reduce
-
-  let sumlast5 = 0;
-  let sumnext5 = 0;
-  //let prev = 0;
-  arr.slice(0, 11).forEach((i) => (sumnext5 = +i));
-  arr.slice(11, 20).forEach((i) => (sumlast5 = +i));
-  return sumnext5 - sumlast5 > 0.03;
-}
 export default Aco;
